@@ -1,4 +1,4 @@
-using IdentityServer4SignalR.Data;
+﻿using IdentityServer4SignalR.Data;
 using IdentityServer4SignalR.Data.Entities;
 using IdentityServer4___SignalR.IdentityServer;
 using Microsoft.AspNetCore.Builder;
@@ -12,6 +12,8 @@ using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.ProjectModel;
 using IdentityServer4SignalR.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Collections.Generic;
 
 namespace IdentityServer4___SignalR
 {
@@ -54,10 +56,61 @@ namespace IdentityServer4___SignalR
             services.AddTransient<IEmailSender, EmailSenderService>();
 
             services.AddControllersWithViews();
-            services.AddRazorPages();
+            services.AddRazorPages(options =>
+            {
+                options.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model =>
+                {
+                    foreach (var selector in model.Selectors)
+                    {
+                        var attributeRouteModel = selector.AttributeRouteModel;
+                        attributeRouteModel.Order = -1;
+                        attributeRouteModel.Template = attributeRouteModel.Template.Remove(0, "Identity".Length);
+                    }
+                });
+            });
+            // add policy for [Authorize("...")] 1:00p b20
+            services.AddAuthentication()
+               .AddLocalApi("Bearer", option =>
+               {
+                   option.ExpectedScope = "api.ChatApp";
+               });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Bearer", policy =>
+                {
+                    policy.AddAuthenticationSchemes("Bearer");
+                    policy.RequireAuthenticatedUser();
+                });
+            });
 
             services.AddSwaggerGen(c =>
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Web Chat Space Api", Version = "v1" })
+                {
+                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Web Chat Space Api", Version = "v1" });
+
+                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.OAuth2,
+                        Flows = new OpenApiOAuthFlows
+                        {
+                            Implicit = new OpenApiOAuthFlow
+                            {
+                                AuthorizationUrl = new Uri("https://localhost:5000/connect/authorize"),
+                                Scopes = new Dictionary<string, string> { { "api.ChatApp", "Live Chat API" } }
+                            },
+                        },
+                    });
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                            },
+                            new List<string>{ "api.ChatApp" }
+                        }
+                    });
+                }
             );
         }
 
@@ -67,12 +120,6 @@ namespace IdentityServer4___SignalR
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
             }
 
             app.UseHttpsRedirection();
@@ -93,6 +140,13 @@ namespace IdentityServer4___SignalR
             {
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapRazorPages();
+            });
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.OAuthClientId("swagger"); // trỏ đúng clientId trong Config
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApp Space Api V1");
             });
         }
     }

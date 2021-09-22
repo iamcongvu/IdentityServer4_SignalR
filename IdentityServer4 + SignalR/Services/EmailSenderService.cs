@@ -1,11 +1,6 @@
-﻿using IdentityServer4SignalR.ViewModels;
+﻿using IdentityServer4___SignalR.ViewModels;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
-using RestSharp;
-using RestSharp.Authenticators;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace IdentityServer4SignalR.Services

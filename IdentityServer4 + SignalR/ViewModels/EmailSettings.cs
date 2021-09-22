@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace IdentityServer4SignalR.ViewModels
+namespace IdentityServer4___SignalR.ViewModels
 {
     public class EmailSettings
     {

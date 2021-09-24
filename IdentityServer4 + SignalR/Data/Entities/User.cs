@@ -8,8 +8,11 @@ namespace IdentityServer4SignalR.Data.Entities
 {
     public class User : IdentityUser
     {
-        public string DisplayName { get; set; }
+        public string FullName { get; set; }
 
-        public DateTime Birthday { get; set; }
+        public string Avartar { get; set; }
+
+        public ICollection<Room> Rooms { get; set; }
+        public ICollection<Message> Messages { get; set; }
     }
 }

@@ -37,9 +37,9 @@ namespace IdentityServer4SignalR.Controllers
             {
                 Id = Guid.NewGuid().ToString(),
                 Email = request.Email,
-                Birthday = DateTime.Parse(request.Dob),
+                // Birthday = DateTime.Parse(request.Dob),
                 UserName = request.UserName,
-                DisplayName = request.FirstName + " " + request.LastName,
+                //DisplayName = request.FirstName + " " + request.LastName,
                 PhoneNumber = request.PhoneNumber,
             };
             var result = await _userManager.CreateAsync(user, request.Password);
@@ -65,7 +65,7 @@ namespace IdentityServer4SignalR.Controllers
             {
                 Id = user.Id,
                 UserName = user.UserName,
-                Dob = user.Birthday,
+                // Dob = user.Birthday,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
             };
@@ -80,7 +80,7 @@ namespace IdentityServer4SignalR.Controllers
             {
                 Id = x.Id,
                 UserName = x.UserName,
-                Dob = x.Birthday,
+                // Dob = x.Birthday,
                 Email = x.Email,
                 PhoneNumber = x.PhoneNumber,
             }).ToListAsync();

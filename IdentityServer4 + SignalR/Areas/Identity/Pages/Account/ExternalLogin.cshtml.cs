@@ -59,11 +59,25 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
             return RedirectToPage("./Login");
         }
 
-        public IActionResult OnPost(string provider, string returnUrl = null)
+        public async Task<IActionResult> OnPost(string provider, string returnUrl = null)
         {
-            // Request a redirect to the external login provider.
+            // Kiểm tra yêu cầu dịch vụ provider tồn tại
+            var listprovider = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            var provider_process = listprovider.Find((m) => m.Name == provider);
+            if (provider_process == null)
+            {
+                return NotFound("Dịch vụ không chính xác: " + provider);
+            }
+
+            // redirectUrl - là Url sẽ chuyển hướng đến - sau khi CallbackPath (/dang-nhap-tu-google) thi hành xong
+            // nó bằng identity/account/externallogin?handler=Callback
+            // tức là gọi OnGetCallbackAsync
             var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+
+            // Cấu hình
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+
+            // Chuyển hướng đến dịch vụ ngoài (Googe, Facebook)
             return new ChallengeResult(provider, properties);
         }
 
@@ -73,7 +87,7 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
             if (remoteError != null)
             {
                 ErrorMessage = $"Error from external provider: {remoteError}";
-                return RedirectToPage("./Login", new {ReturnUrl = returnUrl });
+                return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -83,7 +97,7 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
             }
 
             // Sign in the user with this external login provider if the user already has a login.
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor : true);
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
             if (result.Succeeded)
             {
                 _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);

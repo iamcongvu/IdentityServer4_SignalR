@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
+using AutoMapper;
 
 namespace IdentityServer4___SignalR
 {
@@ -54,9 +55,11 @@ namespace IdentityServer4___SignalR
             .AddDeveloperSigningCredential();
 
             services.AddTransient<IEmailSender, EmailSenderService>();
+            //services.AddTransient<IMapper, Mapper>();
+            services.AddAutoMapper(typeof(Startup));
 
             services.AddControllersWithViews();
-            services.AddRazorPages(options =>
+            IMvcBuilder build = services.AddRazorPages(options =>
             {
                 options.Conventions.AddAreaFolderRouteModelConvention("Identity", "/Account/", model =>
                 {
@@ -68,6 +71,14 @@ namespace IdentityServer4___SignalR
                     }
                 });
             });
+
+#if DEBUG
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            if (environment == Environments.Development)
+            {
+                build.AddRazorRuntimeCompilation();
+            }
+#endif
             // add policy for [Authorize("...")] 1:00p b20
             services.AddAuthentication()
                 .AddGoogle(googleOptions =>

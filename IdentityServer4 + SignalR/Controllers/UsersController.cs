@@ -14,10 +14,7 @@ using System.Threading.Tasks;
 
 namespace IdentityServer4SignalR.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize("Bearer")]
-    public class UsersController : ControllerBase
+    public class UsersController : BaseController
     {
         public readonly UserManager<User> _userManager;
         public readonly RoleManager<IdentityRole> _roleManager;

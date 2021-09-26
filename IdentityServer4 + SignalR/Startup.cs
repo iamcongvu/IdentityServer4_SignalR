@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
 using AutoMapper;
+using IdentityServer4SignalR.Hubs;
 
 namespace IdentityServer4___SignalR
 {
@@ -71,6 +72,7 @@ namespace IdentityServer4___SignalR
                     }
                 });
             });
+            services.AddSignalR();
 
 #if DEBUG
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
@@ -172,6 +174,7 @@ namespace IdentityServer4___SignalR
             {
                 endpoints.MapDefaultControllerRoute();
                 endpoints.MapRazorPages();
+                endpoints.MapHub<ChatHub>("/chatHub");
             });
 
             app.UseSwagger();

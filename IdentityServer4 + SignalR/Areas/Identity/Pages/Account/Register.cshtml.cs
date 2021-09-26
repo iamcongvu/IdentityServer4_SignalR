@@ -47,6 +47,16 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
         public class InputModel
         {
             [Required]
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 5)]
+            [Display(Name = "Full name")]
+            public string FullName { get; set; }
+
+            [Required]
+            [Display(Name = "Username")]
+            [EmailAddress]
+            public string UserName { get; set; }
+
+            [Required]
             [Display(Name = "Email")]
             [EmailAddress]
             public string Email { get; set; }
@@ -61,6 +71,10 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Required]
+            [Display(Name = "Avatar")]
+            public string Avatar { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
@@ -71,12 +85,20 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            var avatars = new string[] { "avatar1.png", "avatar2.png", "avatar3.png", "avatar4.png" };
+            var index = int.Parse(Input.Avatar);
+            if (index < 0 || index > avatars.Count() - 1)
+                index = 0;
+
+            var avatarName = avatars[index];
+            var user = new User { UserName = Input.Email, Email = Input.Email, FullName = Input.FullName, Avartar = avatarName };
+
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            var result = await _userManager.CreateAsync(user, Input.Password);
+
             if (ModelState.IsValid)
             {
-                var user = new User { UserName = Input.Email, Email = Input.Email };
-                var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");

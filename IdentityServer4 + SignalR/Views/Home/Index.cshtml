@@ -11,12 +11,11 @@
                 <i class="fas fa-plus"></i>
             </a>
         </div>
-        <ul class="rooms list-unstyled" id="room-list">
+        <ul class="rooms list-unstyled" id="room-list" data-bind="foreach: chatRooms">
             <li>
-                <a href="#">Nghiên cứu MAUI</a>
-            </li>
-            <li>
-                <a href="#">Tổ công tác cuối năm</a>
+                <a href="#" 
+                   data-bind="text: $data.name,
+                   attr: { 'data-roomId': $data.id }, click: $parent.joinRoom.bind($data), css: { active: $root.joinedRoom() == $data.name()}"></a> @*$data là 1 item trong vòng lặp foreach ở trên*@
             </li>
         </ul>
         <div class="profile">
@@ -35,10 +34,10 @@
     @* Nếu chưa vào room nào *@
 
     @*<div class="main-content">
-        <span class="m-auto">
-            Please select room to join!
-        </span>
-    </div>*@
+            <span class="m-auto">
+                Please select room to join!
+            </span>
+        </div>*@
 
     @* Đã vào room *@
     <div class="main-content">
@@ -122,13 +121,13 @@
     @* section 3 *@
     <div class="users-container">
         <div class="header">
-            <h5>Who's Here (<span> 0 </span> )</h5>
+            <h5>Who's Here ( <span data-bind="text: filteredChatUsers().length"></span> )</h5>
         </div>
 
         <ul id="users-list" class="list-unstyled" data-bind="foreach: filteredChatUsers">
             <li>
                 <div class="user">
-                    <img src="/images/icons/avatar1.png" class="user-avatar" data-bind="attr: { src: '/images/icons' + $data.avatar() }" />
+                    <img class="user-avatar" data-bind="attr: { src: '/images/icons' + $data.avatar() }" />
                     <div class="right-side">
                         <input type="hidden" class="username" data-bind="value: $data.userName" />
                         <span class="author" data-bind="text: $data.displayName">
@@ -157,7 +156,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: createRoom">Create</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: createRoom">Create</button> @*bắt được self.createRoom bên chat.js*@
             </div>
         </div>
     </div>
@@ -174,11 +173,11 @@
                 </button>
             </div>
             <div class="modal-body">
-                <input type="text" class="form-control" id="newRoomName" data-bind="value: $root.joinedRoom()">
+                <input type="text" class="form-control" id="newRoomName" @*data-bind="value: $root.joinedRoom()*@>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: editRoom">Update</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" @*data-bind="click: editRoom"*@>Update</button>
             </div>
         </div>
     </div>
@@ -199,13 +198,14 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" data-dismiss="modal" data-bind="click: deleteRoom">Delete</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" @*data-bind="click: deleteRoom"*@>Delete</button>
             </div>
         </div>
     </div>
 </div>
 @section scripts {
-
     <script src="~/lib/knockout/knockout-3.5.1.js"></script>
-    <script src="~/js/site.js"></script>
+    <script src="~/js/signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
 }

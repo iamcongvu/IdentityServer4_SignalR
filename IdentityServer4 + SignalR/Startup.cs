@@ -49,10 +49,11 @@ namespace IdentityServer4___SignalR
                 options.Events.RaiseSuccessEvents = true;
             })
             .AddInMemoryApiResources(Config.Apis)
-            .AddInMemoryClients(Configuration.GetSection("IdentityServer:Clients"))
+            .AddInMemoryClients(Config.Clients)
             .AddInMemoryIdentityResources(Config.Ids)
             .AddInMemoryApiScopes(Config.ApiScopes)
             .AddAspNetIdentity<User>()
+            .AddProfileService<IdentityProfileService>()
             .AddDeveloperSigningCredential();
 
             services.AddTransient<IEmailSender, EmailSenderService>();
@@ -129,7 +130,7 @@ namespace IdentityServer4___SignalR
                         {
                             Implicit = new OpenApiOAuthFlow
                             {
-                                AuthorizationUrl = new Uri("https://localhost:5000/connect/authorize"),
+                                AuthorizationUrl = new Uri("https://localhost:5009/connect/authorize"),
                                 Scopes = new Dictionary<string, string> { { "api.ChatApp", "Live Chat API" } }
                             },
                         },
@@ -155,6 +156,12 @@ namespace IdentityServer4___SignalR
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
 
             app.UseHttpsRedirection();
 
@@ -162,11 +169,9 @@ namespace IdentityServer4___SignalR
 
             app.UseIdentityServer();
 
-            app.UseAuthentication();
-
             app.UseRouting();
 
-            app.UseAuthorization();
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

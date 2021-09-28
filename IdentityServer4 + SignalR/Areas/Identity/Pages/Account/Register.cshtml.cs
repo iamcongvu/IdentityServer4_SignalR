@@ -53,7 +53,6 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
 
             [Required]
             [Display(Name = "Username")]
-            [EmailAddress]
             public string UserName { get; set; }
 
             [Required]
@@ -91,7 +90,7 @@ namespace IdentityServer4SignalR.Areas.Identity.Pages.Account
                 index = 0;
 
             var avatarName = avatars[index];
-            var user = new User { UserName = Input.Email, Email = Input.Email, FullName = Input.FullName, Avartar = avatarName };
+            var user = new User { UserName = Input.UserName, Email = Input.Email, FullName = Input.FullName, Avatar = avatarName };
 
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();

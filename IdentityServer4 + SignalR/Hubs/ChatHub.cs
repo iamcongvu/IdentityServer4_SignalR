@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
-using IdentityModel;
 using IdentityServer4SignalR.Data;
 using IdentityServer4SignalR.Data.Entities;
 using IdentityServer4SignalR.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace IdentityServer4SignalR.Hubs
 {
+    [Authorize]
     public class ChatHub : Hub
     {
         public readonly static List<UserVm> _Connections = new List<UserVm>(); // danh sách những người kết nối
@@ -105,7 +106,7 @@ namespace IdentityServer4SignalR.Hubs
                     _ConnectionsMap.Add(IdentityName, Context.ConnectionId);
                 }
 
-                Clients.Caller.SendAsync("getProfileInfo", user.FullName, user.Avartar);
+                Clients.Caller.SendAsync("getProfileInfo", user.FullName, user.Avatar);
             }
             catch (Exception ex)
             {

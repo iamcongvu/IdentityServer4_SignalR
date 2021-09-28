@@ -32,12 +32,8 @@ namespace IdentityServer4SignalR.Controllers
         {
             var user = new User()
             {
-                Id = Guid.NewGuid().ToString(),
-                Email = request.Email,
-                // Birthday = DateTime.Parse(request.Dob),
-                UserName = request.UserName,
-                //DisplayName = request.FirstName + " " + request.LastName,
-                PhoneNumber = request.PhoneNumber,
+                //Id = Guid.NewGuid().ToString(),
+                //Email = request.Email,
             };
             var result = await _userManager.CreateAsync(user, request.Password);
             if (result.Succeeded)
@@ -60,29 +56,25 @@ namespace IdentityServer4SignalR.Controllers
             }
             var userVm = new UserVm()
             {
-                Id = user.Id,
-                UserName = user.UserName,
-                // Dob = user.Birthday,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
+                //UserName = user.UserName,
+                //FullName = user.FullName,
+                //Avatar = user.Avatar,
             };
             return Ok(userVm);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
-        {
-            var user = _userManager.Users;
-            var query = await user.Select(x => new UserVm()
-            {
-                Id = x.Id,
-                UserName = x.UserName,
-                // Dob = x.Birthday,
-                Email = x.Email,
-                PhoneNumber = x.PhoneNumber,
-            }).ToListAsync();
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllUsers()
+        //{
+        //    var user = _userManager.Users;
+        //    var query = await user.Select(x => new UserVm()
+        //    {
+        //        UserName = user.,
+        //        FullName = user.FullName,
+        //        Avatar = user.Avartar,
+        //    }).ToListAsync();
 
-            return Ok(query);
-        }
+        //    return Ok(query);
+        //}
     }
 }

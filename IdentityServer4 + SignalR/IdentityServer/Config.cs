@@ -30,7 +30,7 @@ namespace IdentityServer4___SignalR.IdentityServer
             {
                 new Client
                 {
-                    ClientId = "webapp",
+                    ClientId = "ChatApp",
                     ClientSecrets = { new Secret("secret".Sha256()) },
 
                     AllowedGrantTypes = GrantTypes.Code,
@@ -62,9 +62,9 @@ namespace IdentityServer4___SignalR.IdentityServer
                     AllowAccessTokensViaBrowser = true,
                     RequireConsent = false,
 
-                    RedirectUris =           { "https://localhost:5000/swagger/oauth2-redirect.html" },
-                    PostLogoutRedirectUris = { "https://localhost:5000/swagger/oauth2-redirect.html" },
-                    AllowedCorsOrigins =     { "https://localhost:5000" },
+                    RedirectUris =           { "https://localhost:5009/swagger/oauth2-redirect.html" },
+                    PostLogoutRedirectUris = { "https://localhost:5009/swagger/oauth2-redirect.html" },
+                    AllowedCorsOrigins =     { "https://localhost:5009" },
 
                     AllowedScopes = new List<string>
                     {

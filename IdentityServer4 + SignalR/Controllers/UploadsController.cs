@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using IdentityServer4SignalR.Data;
 using IdentityServer4SignalR.Data.Entities;
+using IdentityServer4SignalR.Hubs;
 using IdentityServer4SignalR.ViewModels;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
@@ -21,15 +23,18 @@ namespace IdentityServer4SignalR.Controllers
         private readonly ManageAppDbContext _context;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _environment; // giúp truy xuât được vào folder wwwroot
+        private readonly IHubContext<ChatHub> _hubContext;
 
         public UploadsController(ManageAppDbContext context,
             IMapper mapper,
             IWebHostEnvironment environment,
-            IConfiguration configruation)
+            IConfiguration configruation,
+            IHubContext<ChatHub> hubContext)
         {
             _context = context;
             _mapper = mapper;
             _environment = environment;
+            _hubContext = hubContext;
 
             FileSizeLimit = configruation.GetSection("FileUpload").GetValue<int>("FileSizeLimit");
             AllowedExtensions = configruation.GetSection("FileUpload").GetValue<string>("AllowedExtensions").Split(",");
@@ -49,6 +54,7 @@ namespace IdentityServer4SignalR.Controllers
                 var fileName = DateTime.Now.ToString("yyyymmddMMss") + "_" + Path.GetFileName(uploadVm.File.FileName);
                 var folderPath = Path.Combine(_environment.WebRootPath, "uploads");
                 var filePath = Path.Combine(folderPath, fileName);
+
                 if (!Directory.Exists(folderPath))
                     Directory.CreateDirectory(folderPath);
 
@@ -80,6 +86,7 @@ namespace IdentityServer4SignalR.Controllers
 
                 // Send image-message to group
                 var messageVm = _mapper.Map<Message, MessageVm>(message);
+                await _hubContext.Clients.Group(room.Name).SendAsync("newMessage", messageVm);
 
                 return Ok();
             }

@@ -1,4 +1,6 @@
-﻿$(document).ready(function () {
+﻿// fetch trả về 1 promise, promise lại có 3 method .then(), .catch(), .finally(), và các hàm này đều nhận 1 callback function
+
+$(document).ready(function () {
     var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
 
     connection.start().then(function () {
@@ -7,12 +9,61 @@
         // lần đầu load room, user:
         viewModel.roomList();
         viewModel.userList();
+    }).catch(function (err) {
+        return console.error(err);
+    });
+
+    connection.on("addUser", function (user) {
+        viewModel.userAdded(
+            new ChatUser(user.username, user.fullName, user.avatar, user.currentRoom,
+                user.device));
+    });
+
+    connection.on("removeUser", function (user) {
+        viewModel.userRemoved(user.username);
+    });
+
+    connection.on("newMessage", function (messageView) {
+        var isMine = messageView.from === viewModel.myName();
+        var message = new ChatMessage(messageView.content, messageView.timestamp,
+            messageView.from, isMine, messageView.avatar);
+        viewModel.chatMessages.push(message);
+        $(".chat-body").animate({ scrollTop: $(".chat-body")[0].scrollHeight }, 1000);
+    });
+
+    connection.on("getProfileInfo", function (displayName, avatar) {
+        viewModel.myName(displayName);
+        viewModel.myAvatar(avatar);
+        viewModel.isLoading(false);
     });
 
     // khi add mới sẽ load tên room luôn 18:45 b5
     // sơ đồ load new room: view request create new room -> controller call "addChatRoom" -> chat.js -> view
     connection.on("addChatRoom", function (room) {
         viewModel.roomAdded(new ChatRoom(room.id, room.name));
+    });
+
+    connection.on("updateChatRoom", function (room) {
+        viewModel.roomUpdated(new ChatRoom(room.id, room.name));
+    });
+
+    connection.on("removeChatRoom", function (id) {
+        viewModel.roomDeleted(id);
+    });
+
+    connection.on("onRoomDeleted", function (message) { // lắng nghe sự kiên onRoomDeleted từ api Rooms truyền lên với tham số là message
+        viewModel.serverInfoMessage(message);
+        $("#errorAlert").removeClass("d-none").show().delay(5000).fadeOut(500);
+
+        if (viewModel.chatRooms().length == 0) {
+            viewModel.joinedRoom("");
+        }
+        else {
+            // Join to the first room in list
+            setTimeout(function () {
+                $("ul#room-list li a")[0].click();
+            }, 50);
+        }
     });
 
     function AppViewModel() { // có tác dụng binding dữ liệu trong model này cho view index
@@ -23,6 +74,7 @@
         self.chatMessages = ko.observableArray([]); // list messages
         self.joinedRoom = ko.observable("");
         self.joinedRoomId = ko.observable(""); // id của Hub mà ta tạo ra
+        self.serverInfoMessage = ko.observable("");
         self.myName = ko.observable("");
         self.myAvatar = ko.observable("avatar1.png"); // mặc định là avatar 1
         self.isLoading = ko.observable(true); // khi lần đầu load có show lên web chat ko
@@ -47,6 +99,23 @@
             }
 
             self.message("");
+        }
+
+        self.sendToRoom = function (roomName, message) {
+            if (roomName.length > 0 && message.length > 0) {
+                fetch('/api/Messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ room: roomName, content: message })
+                });
+            }
+        }
+
+        // call 1 method của hub từ client
+        self.sendPrivate = function (receiver, message) {
+            if (receiver.length > 0 && message.length > 0) {
+                connection.invoke("SendPrivate", receiver.trim(), message.trim());
+            }
         }
 
         // filter user
@@ -85,12 +154,33 @@
                 });
         }
 
+        // call api create
         self.createRoom = function () {
             var roomName = $("#roomName").val();
             fetch('/api/Rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ Name: roomName }),
+            });
+        }
+
+        // call api update
+        self.editRoom = function () {
+            var roomId = self.joinedRoomId();
+            var roomName = $("#newRoomName").val();
+            fetch('/api/Rooms/' + roomId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: roomId, name: roomName })
+            });
+        }
+
+        // call api delete
+        self.deleteRoom = function () {
+            fetch('/api/Rooms/' + self.joinedRoomId(), {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: self.joinedRoomId() })
             });
         }
 
@@ -107,8 +197,78 @@
             });
         }
 
+        self.messageHistory = function () {
+            fetch('/api/Messages/Room/' + viewModel.joinedRoom())
+                .then(response => response.json())
+                .then(data => {
+                    self.chatMessages.removeAll();
+                    for (var i = 0; i < data.length; i++) {
+                        var isMine = data[i].from == self.myName();
+                        self.chatMessages.push(new ChatMessage(data[i].content,
+                            data[i].timestamp,
+                            data[i].from,
+                            isMine,
+                            data[i].avatar))
+                    }
+
+                    $(".chat-body").animate({ scrollTop: $(".chat-body")[0].scrollHeight }, 1000);
+                });
+        }
+
         self.roomAdded = function (room) {
             self.chatRooms.push(room);
+        }
+
+        self.roomUpdated = function (updatedRoom) {
+            var room = ko.utils.arrayFirst(self.chatRooms(), function (item) {
+                return updatedRoom.id() == item.id();
+            });
+
+            room.name(updatedRoom.name());
+
+            if (self.joinedRoomId() == room.id()) {
+                self.joinRoom(room);
+            }
+        }
+
+        self.roomDeleted = function (id) {
+            var temp;
+            ko.utils.arrayForEach(self.chatRooms(), function (room) {
+                if (room.id() == id)
+                    temp = room;
+            });
+            self.chatRooms.remove(temp);
+        }
+
+        // hiển thị hoặc xóa user khi login và logout
+        self.userAdded = function (user) {
+            self.chatUsers.push(user);
+        }
+
+        self.userRemoved = function (id) {
+            var temp;
+            ko.utils.arrayForEach(self.chatUsers(), function (user) {
+                if (user.userName() == id)
+                    temp = user;
+            });
+            self.chatUsers.remove(temp);
+        }
+
+        self.uploadFiles = function () {
+            var form = document.getElementById("uploadForm");
+            $.ajax({
+                type: "POST",
+                url: '/api/Uploads',
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function () {
+                    $("#UploadedFile").val("");
+                },
+                error: function (error) {
+                    alert('Error: ' + error.responseText);
+                }
+            });
         }
     }
 

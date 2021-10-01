@@ -3,7 +3,6 @@ using IdentityServer4SignalR.Data;
 using IdentityServer4SignalR.Data.Entities;
 using IdentityServer4SignalR.Hubs;
 using IdentityServer4SignalR.ViewModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -106,8 +105,12 @@ namespace IdentityServer4SignalR.Controllers
             _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.All.SendAsync("removeChatRoom", room.Id);
-            await _hubContext.Clients.Group(room.Name).SendAsync("onRoomDeleted", string.Format("Room {0} has been deleted.\nYou are moved to the first available room!", room.Name));
+            await _hubContext.Clients.All.SendAsync("removeChatRoom", room.Id); // gửi tất cả mọi người kể cả ngoài room
+            await _hubContext.Clients.Group(room.Name)
+                .SendAsync(
+                "onRoomDeleted",
+                string.Format("Room {0} has been deleted.\nYou are moved to the first available room!",
+                room.Name)); // gửi cho những người thuộc nhóm đó
 
             return NoContent();
         }

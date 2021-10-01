@@ -10,7 +10,7 @@ namespace IdentityServer4SignalR.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize("Bearer")]
+    [Authorize]
     public class BaseController : ControllerBase
     {
     }
